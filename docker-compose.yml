@@ -15,7 +15,11 @@ services:
             - "8080:8080" # The Web UI (enabled by --api)
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
-        
+        labels:
+            # we dont want it to be directly accessible from the outside
+            - "traefik.enable=false"
+
+
     webui: 
         image: grupo1iic2173/web-app:latest
         labels:
