@@ -20,6 +20,6 @@ In your browser:
 - api.localhost/[0-9]
     - same as above but this shows how to use regular expressions to match paths to services
 - localhost:8080
-    - access traefik's dashboard where you can check all the possible routes and services it matches in the backend. You can also check response times, graphs, etc etc etc (it will probably be very usefull for the rest of the course)
+    - access traefik's dashboard where you can check all the possible routes and services it matches in the backend. You can also check response times, graphs, etc etc etc (it will probably be very useful for the rest of the course)
 
 **It is important to add an `expose portnumber` to your service's dockerfile in order for our reverse-proxy service (traefik) to detect it automagically**
