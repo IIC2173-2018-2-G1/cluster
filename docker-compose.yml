@@ -38,8 +38,6 @@ services:
         #     -  'MONGODB_PASS=password!'
         volumes:
             - 'mongodb-data:/data/db'
-        # ports:
-        #     - '27017:27017'
         command: mongod --smallfiles
 
     mongo-express:
@@ -58,7 +56,4 @@ volumes:
     mongodb-data: {}
 
             
-
-
-
 # docker stack deploy --compose-file docker-compose.yml app
