@@ -1,5 +1,9 @@
 version: "3.5"
 
+networks:
+  backend:
+    driver: bridge
+
 services:
     reverse-proxy:
         image: traefik # The official Traefik docker image
@@ -18,21 +22,58 @@ services:
         labels:
             # we dont want it to be directly accessible from the outside
             - "traefik.enable=false"
-
+            # - traefik.frontend.auth.forward.address=auth.localhost/users
+        networks:
+            - backend
 
     webui: 
         image: grupo1iic2173/web-app:latest
         labels:
             - "traefik.frontend.rule=Host:web.localhost"
             - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
+        networks:
+            - backend
 
-    whoami:
-        image: containous/whoami # A container that exposes an API to show its IP address
+    # whoami:
+    #     image: containous/whoami # A container that exposes an API to show its IP address
+    #     labels:
+            
+    #         # whit the next line, we define the path this sevice is going to "grab" (it allows regex)
+    #         - "traefik.frontend.rule=Host:api.localhost;Path:/test2,/{path:[0-9]}/"
+    #         # this way api.localhost/test2 will match this service 
+    #         # api.localhost/3 will also match this service (it accepts regex)
+    #     networks:
+    #         - backend
+
+    user-service:
+        container_name: user-service
+        restart: always
+        # comment the image line if you want to build locally
+        image: grupo1iic2173/user-service:latest
+        # build:
+            # if you want a local build, point to the local directory
+            # ../user-service/
+        links:
+            - mongodb:mongo
         labels:
-            # whit the next line, we define the path this sevice is going to "grab" (it allows regex)
-            - "traefik.frontend.rule=Host:api.localhost;Path:/test2,/{path:[0-9]}/"
-            # this way api.localhost/test2 will match this service 
-            # api.localhost/3 will also match this service (it accepts regex)
+            - "traefik.frontend.rule=Host:users.localhost"
+        networks:
+            - backend
+    
+    authentication-service:
+        container_name: authentication-service
+        restart: always
+        # comment the image line if you want to build locally
+        image: grupo1iic2173/authentication-service:latest
+        # build:
+            # If you want a local build, point to the local directory
+            # ../authentication-service/
+        links:
+            - mongodb:mongo
+        labels:
+            - "traefik.frontend.rule=Host:localhost"
+        networks:
+            - backend
     
     mongodb:
         image: mongo:latest
@@ -47,6 +88,10 @@ services:
         labels:
             # we dont want it to be accessible from the outside
             - "traefik.enable=false"
+        ports:
+            - "27017:27017"
+        networks:
+            - backend
 
     mongo-express:
         container_name: mongo-express
@@ -60,9 +105,10 @@ services:
         image: mongo-express
         labels:
             - "traefik.frontend.rule=Host:admindb.localhost"
+        networks:
+            - backend
 
 volumes:
     mongodb-data: {}
-
             
 # docker stack deploy --compose-file docker-compose.yml app
