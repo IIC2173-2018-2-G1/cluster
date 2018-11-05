@@ -60,6 +60,21 @@ services:
         networks:
             - backend
     
+    reaction-service:
+       container_name: reaction-service
+       restart: always
+       # comment the image line if you want to build locally
+       image: grupo1iic2173/reaction-service:latest
+       # build:
+           # if you want a local build, point to the local directory
+           # ../reaction-service/
+       links:
+           - mongodb:mongo
+       #labels:
+        #   - "traefik.frontend.rule=Host:users.localhost"
+       networks:
+           - backend
+    
     authentication-service:
         container_name: authentication-service
         restart: always
