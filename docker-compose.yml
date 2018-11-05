@@ -74,6 +74,40 @@ services:
         #   - "traefik.frontend.rule=Host:users.localhost"
        networks:
            - backend
+
+    hashtag-service:
+        container_name: hashtag-service
+        restart: always
+        # comment the image line if you want to build locally
+        image: grupo1iic2173/hashtag-service:latest
+        # build:
+            # If you want a local build, point to the local directory
+            # ../authentication-service/
+        links:
+            - mongodb:mongo
+        environment:
+        - DB=mongodb://mongodb:27017/mongodb
+        # labels:
+        #     - "traefik.frontend.rule=Host:localhost"
+        networks:
+            - backend
+
+    channel-service:
+        container_name: channel-service
+        restart: always
+        # comment the image line if you want to build locally
+        image: grupo1iic2173/channel-service:latest
+        # build:
+            # If you want a local build, point to the local directory
+            # ../authentication-service/
+        links:
+            - mongodb:mongo
+        environment:
+        - DB=mongodb://mongodb:27017/mongodb
+        # labels:
+        #     - "traefik.frontend.rule=Host:localhost"
+        networks:
+            - backend
     
     authentication-service:
         container_name: authentication-service
