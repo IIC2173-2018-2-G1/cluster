@@ -123,6 +123,21 @@ services:
             - "traefik.frontend.rule=Host:localhost"
         networks:
             - backend
+          
+     messages-service:
+        container_name: messages-service
+        restart: always
+        # comment the image line if you want to build locally
+        image: grupo1iic2173/messages-service:latest
+        # build:
+            # If you want a local build, point to the local directory
+            # ../authentication-service/
+        links:
+            - mongodb:mongo
+        labels:
+            - "traefik.frontend.rule=Host:localhost"
+        networks:
+            - backend
     
     mongodb:
         image: mongo:latest
