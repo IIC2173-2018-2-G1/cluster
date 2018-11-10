@@ -124,7 +124,7 @@ services:
         networks:
             - backend
           
-     messages-service:
+    messages-service:
         container_name: messages-service
         restart: always
         # comment the image line if you want to build locally
