@@ -124,8 +124,8 @@ services:
         networks:
             - backend
           
-    messages-service:
-        container_name: messages-service
+    message-service:
+        container_name: message-service
         restart: always
         # comment the image line if you want to build locally
         image: grupo1iic2173/messages-service:latest
