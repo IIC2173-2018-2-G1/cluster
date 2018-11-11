@@ -86,7 +86,7 @@ services:
         links:
             - mongodb:mongo
         environment:
-        - DB=mongodb://mongodb:27017/mongodb
+            - DB=mongodb://mongodb:27017/mongodb
         # labels:
         #     - "traefik.frontend.rule=Host:localhost"
         networks:
@@ -103,7 +103,7 @@ services:
         links:
             - mongodb:mongo
         environment:
-        - DB=mongodb://mongodb:27017/mongodb
+            - DB=mongodb://mongodb:27017/mongodb
         # labels:
         #     - "traefik.frontend.rule=Host:localhost"
         networks:
@@ -134,8 +134,10 @@ services:
             # ../authentication-service/
         links:
             - mongodb:mongo
-        labels:
-            - "traefik.frontend.rule=Host:localhost"
+        environment:
+            - DB=mongodb://mongodb:27017/mongodb
+        #labels:
+        #    - "traefik.frontend.rule=Host:localhost"
         networks:
             - backend
     
