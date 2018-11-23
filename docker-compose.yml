@@ -27,23 +27,13 @@ services:
             - backend
 
     webui: 
+        container_name: frontend
         image: grupo1iic2173/web-app:latest
         labels:
             - "traefik.frontend.rule=Host:web.localhost"
             - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
         networks:
             - backend
-
-    # whoami:
-    #     image: containous/whoami # A container that exposes an API to show its IP address
-    #     labels:
-            
-    #         # whit the next line, we define the path this sevice is going to "grab" (it allows regex)
-    #         - "traefik.frontend.rule=Host:api.localhost;Path:/test2,/{path:[0-9]}/"
-    #         # this way api.localhost/test2 will match this service 
-    #         # api.localhost/3 will also match this service (it accepts regex)
-    #     networks:
-    #         - backend
 
     user-service:
         container_name: user-service
@@ -55,25 +45,25 @@ services:
             # ../user-service/
         links:
             - mongodb:mongo
-        labels:
-            - "traefik.frontend.rule=Host:users.localhost"
+        environment:
+            - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
     
     reaction-service:
-       container_name: reaction-service
-       restart: always
-       # comment the image line if you want to build locally
-       image: grupo1iic2173/reaction-service:latest
-       # build:
+        container_name: reaction-service
+        restart: always
+        # comment the image line if you want to build locally
+        image: grupo1iic2173/reaction-service:latest
+        # build:
            # if you want a local build, point to the local directory
            # ../reaction-service/
-       links:
-           - mongodb:mongo
-       #labels:
-        #   - "traefik.frontend.rule=Host:users.localhost"
-       networks:
-           - backend
+        links:
+            - mongodb:mongo
+        environment:
+            - DB=mongodb://mongodb:27017/arquitran
+        networks:
+            - backend
 
     hashtag-service:
         container_name: hashtag-service
@@ -82,13 +72,11 @@ services:
         image: grupo1iic2173/hashtag-service:latest
         # build:
             # If you want a local build, point to the local directory
-            # ../authentication-service/
+            # ../hashtag-service/
         links:
             - mongodb:mongo
         environment:
-            - DB=mongodb://mongodb:27017/mongodb
-        # labels:
-        #     - "traefik.frontend.rule=Host:localhost"
+            - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
 
@@ -99,13 +87,11 @@ services:
         image: grupo1iic2173/channel-service:latest
         # build:
             # If you want a local build, point to the local directory
-            # ../authentication-service/
+            # ../channel-service/
         links:
             - mongodb:mongo
         environment:
-            - DB=mongodb://mongodb:27017/mongodb
-        # labels:
-        #     - "traefik.frontend.rule=Host:localhost"
+            - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
     
@@ -119,6 +105,8 @@ services:
             # ../authentication-service/
         links:
             - mongodb:mongo
+        environment:
+            - DB=mongodb://mongodb:27017/arquitran
         labels:
             - "traefik.frontend.rule=Host:localhost"
         networks:
@@ -131,13 +119,11 @@ services:
         image: grupo1iic2173/messages-service:latest
         # build:
             # If you want a local build, point to the local directory
-            # ../authentication-service/
+            # ../message-service/
         links:
             - mongodb:mongo
         environment:
-            - DB=mongodb://mongodb:27017/mongodb
-        #labels:
-        #    - "traefik.frontend.rule=Host:localhost"
+            - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
     
