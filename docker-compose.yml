@@ -1,8 +1,8 @@
-version: "3.5"
+version: "3"
 
 networks:
   backend:
-    driver: bridge
+    driver: overlay
 
 services:
     reverse-proxy:
@@ -13,27 +13,35 @@ services:
         # --docker.swarmMode --constraint=node.role==manager
         # and we must remove --logLevel=DEBUG"
         
-        command: --api --docker --docker.domain=localhost # Enables the web UI and tells Traefik to listen to docker
+        command: --api --docker --docker.domain=charette1.ing.puc.cl # Enables the web UI and tells Traefik to listen to docker
         ports:
             - "80:80"     # The HTTP port
             - "8080:8080" # The Web UI (enabled by --api)
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
-        labels:
-            # we dont want it to be directly accessible from the outside
-            - "traefik.enable=false"
-            # - traefik.frontend.auth.forward.address=auth.localhost/users
+        # labels:
+        #     # we dont want it to be directly accessible from the outside
+        #     - "traefik.enable=false"
+        #     # - traefik.frontend.auth.forward.address=auth.charette1.ing.puc.cl/users
         networks:
             - backend
+        deploy:
+            replicas: 1
+            labels:
+                - "traefik.enable=false"
 
     webui: 
         container_name: frontend
         image: grupo1iic2173/web-app:latest
         labels:
-            - "traefik.frontend.rule=Host:web.localhost"
+            # - "traefik.frontend.rule=Host:web.charette1.ing.puc.cl"
             - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
         networks:
             - backend
+        deploy:
+            replicas: 1
+            labels:
+                - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
 
     user-service:
         container_name: user-service
@@ -49,6 +57,8 @@ services:
             - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
+        deploy:
+            replicas: 1
     
     reaction-service:
         container_name: reaction-service
@@ -64,6 +74,8 @@ services:
             - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
+        deploy:
+            replicas: 1
 
     hashtag-service:
         container_name: hashtag-service
@@ -79,6 +91,8 @@ services:
             - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
+        deploy:
+            replicas: 1    
 
     channel-service:
         container_name: channel-service
@@ -94,6 +108,8 @@ services:
             - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
+        deploy:
+            replicas: 1
     
     authentication-service:
         container_name: authentication-service
@@ -108,9 +124,16 @@ services:
         environment:
             - DB=mongodb://mongodb:27017/arquitran
         labels:
-            - "traefik.frontend.rule=Host:localhost"
+            - "traefik.frontend.rule=Host:charette1.ing.puc.cl"
+            - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
         networks:
             - backend
+        deploy:
+            replicas: 1
+            labels:
+                - "traefik.frontend.rule=Host:charette1.ing.puc.cl"
+                - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
+                - "traefik.port=80"
           
     message-service:
         container_name: message-service
@@ -126,6 +149,8 @@ services:
             - DB=mongodb://mongodb:27017/arquitran
         networks:
             - backend
+        deploy:
+            replicas: 1
     
     mongodb:
         image: mongo:latest
@@ -140,6 +165,10 @@ services:
         labels:
             # we dont want it to be accessible from the outside
             - "traefik.enable=false"
+        deploy:
+            replicas: 1
+            labels:
+                - "traefik.enable=false"
         ports:
             - "27017:27017"
         networks:
@@ -152,6 +181,8 @@ services:
             - mongodb:mongo
         networks:
             - backend
+        deploy:
+            replicas: 1
 
     mongo-express:
         container_name: mongo-express
@@ -164,7 +195,11 @@ services:
             # - 'ME_CONFIG_BASICAUTH_PASSWORD=password!'
         image: mongo-express
         labels:
-            - "traefik.frontend.rule=Host:admindb.localhost"
+            - "traefik.frontend.rule=Host:admindb.charette1.ing.puc.cl"
+        deploy:
+            replicas: 1
+            labels:
+                - "traefik.frontend.rule=Host:admindb.charette1.ing.puc.cl"
         networks:
             - backend
 
