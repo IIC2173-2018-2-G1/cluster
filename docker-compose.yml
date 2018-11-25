@@ -145,6 +145,14 @@ services:
         networks:
             - backend
 
+    db-init-service:
+        container_name: db-init-service
+        image: grupo1iic2173/db-init-service:latest
+        links:
+            - mongodb:mongo
+        networks:
+            - backend
+
     mongo-express:
         container_name: mongo-express
         links:
