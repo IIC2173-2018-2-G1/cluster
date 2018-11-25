@@ -5,205 +5,190 @@ networks:
     driver: overlay
 
 services:
-    reverse-proxy:
-        image: traefik # The official Traefik docker image
-        # For production:
-        # --docker.domain=localhost must be cahnged to the real domain
-        # swarm mode must be activated, add the following:
-        # --docker.swarmMode --constraint=node.role==manager
-        # and we must remove --logLevel=DEBUG"
-        
-        command: --api --docker --docker.domain=localhost # Enables the web UI and tells Traefik to listen to docker
-        ports:
-            - "80:80"     # The HTTP port
-            - "8080:8080" # The Web UI (enabled by --api)
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
-        # labels:
-        #     # we dont want it to be directly accessible from the outside
-        #     - "traefik.enable=false"
-        #     # - traefik.frontend.auth.forward.address=auth.charette1.ing.puc.cl/users
-        networks:
-            - backend
-        deploy:
-            replicas: 1
-            # labels:
-            #     - "traefik.enable=false"
+  reverse-proxy:
+    image: traefik
+    command:
+      # Enables the web UI
+      - --api
 
-    webui: 
-        container_name: frontend
-        image: grupo1iic2173/web-app:latest
-        labels:
-            # - "traefik.frontend.rule=Host:web.charette1.ing.puc.cl"
-            - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
-        networks:
-            - backend
-        deploy:
-            replicas: 1
-            labels:
-                - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
+      # Tells Traefik to listen to docker
+      - --docker
 
-    user-service:
-        container_name: user-service
-        restart: always
-        # comment the image line if you want to build locally
-        image: grupo1iic2173/user-service:latest
-        # build:
-            # if you want a local build, point to the local directory
-            # ../user-service/
-        links:
-            - mongodb:mongo
-        environment:
-            - DB=mongodb://mongodb:27017/arquitran
-        networks:
-            - backend
-        deploy:
-            replicas: 1
-    
-    reaction-service:
-        container_name: reaction-service
-        restart: always
-        # comment the image line if you want to build locally
-        image: grupo1iic2173/reaction-service:latest
-        # build:
-           # if you want a local build, point to the local directory
-           # ../reaction-service/
-        links:
-            - mongodb:mongo
-        environment:
-            - DB=mongodb://mongodb:27017/arquitran
-        networks:
-            - backend
-        deploy:
-            replicas: 1
+      # Sets up de domain
+      - "--docker.domain=${DOMAIN?}"
 
-    hashtag-service:
-        container_name: hashtag-service
-        restart: always
-        # comment the image line if you want to build locally
-        image: grupo1iic2173/hashtag-service:latest
-        # build:
-            # If you want a local build, point to the local directory
-            # ../hashtag-service/
-        links:
-            - mongodb:mongo
-        environment:
-            - DB=mongodb://mongodb:27017/arquitran
-        networks:
-            - backend
-        deploy:
-            replicas: 1    
+      # Sets up docker swam mode
+      - --docker.swarmmode 
 
-    channel-service:
-        container_name: channel-service
-        restart: always
-        # comment the image line if you want to build locally
-        image: grupo1iic2173/channel-service:latest
-        # build:
-            # If you want a local build, point to the local directory
-            # ../channel-service/
-        links:
-            - mongodb:mongo
-        environment:
-            - DB=mongodb://mongodb:27017/arquitran
-        networks:
-            - backend
-        deploy:
-            replicas: 1
-    
-    authentication-service:
-        container_name: authentication-service
-        restart: always
-        # comment the image line if you want to build locally
-        image: grupo1iic2173/authentication-service:latest
-        # build:
-            # If you want a local build, point to the local directory
-            # ../authentication-service/
-        links:
-            - mongodb:mongo
-        environment:
-            - DB=mongodb://mongodb:27017/arquitran
-        labels:
-            - "traefik.frontend.rule=Host:localhost"
-            - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
-        networks:
-            - backend
-        deploy:
-            replicas: 1
-            labels:
-                - "traefik.frontend.rule=Host:localhost"
-                - "traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*"
-                - "traefik.port=80"
-          
-    message-service:
-        container_name: message-service
-        restart: always
-        # comment the image line if you want to build locally
-        image: grupo1iic2173/messages-service:latest
-        # build:
-            # If you want a local build, point to the local directory
-            # ../message-service/
-        links:
-            - mongodb:mongo
-        environment:
-            - DB=mongodb://mongodb:27017/arquitran
-        networks:
-            - backend
-        deploy:
-            replicas: 1
-    
-    mongodb:
-        image: mongo:latest
-        container_name: mongodb
-        # this is commented for now to ease access. For producton it will have a key!!
-        # environment:
-        #     -  'MONGODB_USER=user' 
-        #     -  'MONGODB_PASS=password!'
-        volumes:
-            - 'mongodb-data:/data/db'
-        command: mongod --smallfiles
-        labels:
-            # we dont want it to be accessible from the outside
-            - "traefik.enable=false"
-        deploy:
-            replicas: 1
-            labels:
-                - "traefik.enable=false"
-        ports:
-            - "27017:27017"
-        networks:
-            - backend
+      # Watch docker changes
+      - --docker.watch
+    ports:
+      - "80:80" # The HTTP port
+      - "8080:8080" # The Web UI (enabled by --api)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
+    # labels:
+    #     # we dont want it to be directly accessible from the outside
+    #     - traefik.enable=false
+    networks:
+      - backend
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
 
-    db-init-service:
-        container_name: db-init-service
-        image: grupo1iic2173/db-init-service:latest
-        links:
-            - mongodb:mongo
-        networks:
-            - backend
-        deploy:
-            replicas: 1
+  mongodb:
+    image: mongo:latest
+    # this is commented for now to ease access. For producton it will have a key!!
+    # environment:
+    #     -  'MONGODB_USER=user'
+    #     -  'MONGODB_PASS=password!'
+    volumes:
+      - mongodb-data:/data/db
+    command: mongod --smallfiles
+    ports:
+      - 27017:27017
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=false
+        - traefik.backend=mongodb
+        - traefik.docker.network=backend
 
-    mongo-express:
-        container_name: mongo-express
-        links:
-            - 'mongodb:mongo'
-        environment:
-            - 'ME_CONFIG_OPTIONS_EDITORTHEME=ambiance'
-            # this is commented for now to ease access. For producton it will have a key!!
-            # - 'ME_CONFIG_BASICAUTH_USERNAME=user'
-            # - 'ME_CONFIG_BASICAUTH_PASSWORD=password!'
-        image: mongo-express
-        labels:
-            - "traefik.frontend.rule=Host:admindb.localhost"
-        deploy:
-            replicas: 1
-            labels:
-                - "traefik.frontend.rule=Host:admindb.localhost"
-        networks:
-            - backend
+  frontend:
+    image: grupo1iic2173/web-app:latest
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.port=3000
+        - traefik.enable=false
+        - traefik.backend=frontend
+        - traefik.docker.network=backend
+
+  user-service:
+    # comment the image line if you want to build locally
+    image: grupo1iic2173/user-service:latest
+    environment:
+      - DB=mongodb://mongodb:27017/arquitran
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=false
+        - traefik.backend=user-service
+        - traefik.port=8087
+
+  reaction-service:
+    image: grupo1iic2173/reaction-service:latest
+    environment:
+      - DB=mongodb://mongodb:27017/arquitran
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=false
+        - traefik.port=8081
+        - traefik.backend=reaction-service
+        - traefik.docker.network=backend
+
+  hashtag-service:
+    image: grupo1iic2173/hashtag-service:latest
+    environment:
+      - DB=mongodb://mongodb:27017/arquitran
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.port=8085
+        - traefik.enable=false
+        - traefik.backend=hashtag-service
+        - traefik.docker.network=backend
+
+  channel-service:
+    image: grupo1iic2173/channel-service:latest
+    environment:
+      - DB=mongodb://mongodb:27017/arquitran
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=false
+        - traefik.port=8084
+        - traefik.backend=channel-service
+        - traefik.docker.network=backend
+
+  authentication-service:
+    image: grupo1iic2173/authentication-service:latest
+    environment:
+      - DB=mongodb://mongodb:27017/arquitran
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.backend=authentication-service
+        - "traefik.frontend.rule=Host:${DOMAIN}"
+        - traefik.port=8082
+        - traefik.frontend.headers.customRequestHeaders=Access-Control-Allow-Origin:*
+        - traefik.docker.network=backend
+
+  message-service:
+    image: grupo1iic2173/messages-service:latest
+    environment:
+      - DB=mongodb://mongodb:27017/arquitran
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=false
+        - traefik.port=8083
+        - traefik.backend=message-service
+        - traefik.docker.network=backend
+
+  db-init-service:
+    image: grupo1iic2173/db-init-service:latest
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=false
+        - traefik.backend=db-init-service
+        - traefik.docker.network=backend
+
+
+  mongo-express:
+    environment:
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      # this is commented for now to ease access. For producton it will have a key!!
+      # - 'ME_CONFIG_BASICAUTH_USERNAME=user'
+      # - 'ME_CONFIG_BASICAUTH_PASSWORD=password!'
+    image: mongo-express
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.port=8081
+        - "traefik.frontend.rule=Host:admindb.${DOMAIN}"
+        - traefik.docker.network=backend
 
 volumes:
-    mongodb-data: {}
-            
+  mongodb-data: {}
 # docker stack deploy --compose-file docker-compose.yml app
